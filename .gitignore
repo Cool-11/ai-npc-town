@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+.env
+.env.local
+.pytest_cache/
+.mypy_cache/
+
+# Godot
+.godot/
+.import/
+*.translation
+*.gd.uid
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Local data
+qdrant_storage/
+backend/memory_data/
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+logs/
+*.log
+backend/logs/
+
+# Build
+build/
+dist/
+*.egg-info/
