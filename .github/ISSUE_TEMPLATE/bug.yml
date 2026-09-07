@@ -1,0 +1,41 @@
+name: 🐛 Bug Report
+description: 报告 NPC Agent / 记忆 / 好感度的 bug
+title: "[Bug] "
+labels: ["bug", "ai-npc-town"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢你提 bug！请尽可能详细描述复现步骤和环境。
+  - type: textarea
+    id: repro
+    attributes:
+      label: 复现步骤
+      placeholder: |
+        1. 启动 Godot + 后端 ...
+        2. 走近 NPC X 按 E ...
+        3. NPC 没反应 / 回复异常
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 预期行为
+      placeholder: NPC 应该回复关于 Y 的内容
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际行为
+      placeholder: NPC 没说话 / 报错 ...
+  - type: dropdown
+    id: npc_id
+    attributes:
+      label: 涉及的 NPC
+      options:
+        - 张三（Python 工程师）
+        - 李四（PM）
+        - 王五（UI 设计师）
+        - 自定义 NPC
