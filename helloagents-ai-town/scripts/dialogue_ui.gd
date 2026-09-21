@@ -12,6 +12,8 @@ extends CanvasLayer
 
 # 当前对话的NPC
 var current_npc_name: String = ""
+# 保存关闭对话框后到达的回复，下次打开同一 NPC 时补显示
+var _pending_replies: Dictionary = {}
 
 # API客户端引用
 var api_client: Node = null
@@ -22,6 +24,8 @@ func _ready():
 
 	# 初始隐藏
 	visible = false
+	# Disable input processing initially to prevent stealing focus from Player (WASD)
+	process_mode = Node.PROCESS_MODE_DISABLED
 
 	# 连接按钮信号
 	send_button.pressed.connect(_on_send_button_pressed)
@@ -93,6 +97,18 @@ func start_dialogue(npc_name: String):
 	npc_name_label.text = npc_name
 	npc_title_label.text = Config.NPC_TITLES.get(npc_name, "")
 
+	# 如果该 NPC 有缓存的回复，在对话开始时显示
+	if _pending_replies.has(npc_name):
+		var _pending_msg: String = _pending_replies[npc_name]
+		_pending_replies.erase(npc_name)
+		# 过滤思考块，同主主响应一致
+		var _r2 = RegEx.new()
+		_r2.compile("<think>[\\s\\S]*?</think>")
+		var _clean_pending = _r2.sub(_pending_msg, "", true).strip_edges()
+		if not _clean_pending.is_empty():
+			dialogue_text.append_text("[color=gray](上次关闭后的回复)[/color] [color=yellow]" + npc_name + ":[/color] " + _clean_pending + "\n")
+
+
 	# 清空对话内容
 	dialogue_text.clear()
 	dialogue_text.append_text("[color=gray]与 " + npc_name + " 的对话开始...[/color]\n")
@@ -103,6 +119,8 @@ func start_dialogue(npc_name: String):
 	# 显示对话框
 	show_dialogue()
 
+	# 临时允许 LineEdit 抢焦点 (打开对话框时让用户能输入)
+	player_input.focus_mode = Control.FOCUS_ALL
 	# 聚焦输入框
 	player_input.grab_focus()
 
@@ -111,6 +129,8 @@ func start_dialogue(npc_name: String):
 func show_dialogue():
 	"""显示对话框"""
 	visible = true
+	# Enable input when dialogue is shown
+	process_mode = Node.PROCESS_MODE_INHERIT
 
 	# 通知玩家进入交互状态 (禁用移动)
 	var player = get_tree().get_first_node_in_group("player")
@@ -120,6 +140,8 @@ func show_dialogue():
 func hide_dialogue():
 	"""隐藏对话框"""
 	visible = false
+	# Disable input when dialogue is hidden
+	process_mode = Node.PROCESS_MODE_DISABLED
 
 	# 通知NPC退出交互状态 (恢复移动) 
 	if current_npc_name != "":
@@ -129,6 +151,8 @@ func hide_dialogue():
 
 	current_npc_name = ""
 
+	# 关闭对话框后禁止 LineEdit 抢焦点,避免开局时拦截 WASD
+	player_input.focus_mode = Control.FOCUS_NONE
 	# 通知玩家退出交互状态 (启用移动)
 	var player = get_tree().get_first_node_in_group("player")
 	if player and player.has_method("set_interacting"):
@@ -170,7 +194,9 @@ func send_message():
 
 func _on_chat_response_received(npc_name: String, message: String):
 	"""收到NPC回复"""
-	if npc_name != current_npc_name:
+	if npc_name != current_npc_name or not visible:
+		# 缓存该 NPC 的回复，下次打开对话时显示
+		_pending_replies[npc_name] = message
 		return
 	
 	# 移除"等待回复..."
@@ -182,8 +208,14 @@ func _on_chat_response_received(npc_name: String, message: String):
 		for i in range(lines.size() - 2):
 			dialogue_text.append_text(lines[i] + "\n")
 	
+	# 过滤 LLM 的 CoT 思考块 (Qwen 等模型会输出 <think>...</think>)
+	var _think_regex = RegEx.new()
+	_think_regex.compile("<think>[\\s\\S]*?</think>")
+	var _clean_msg = _think_regex.sub(message, "", true).strip_edges()
+	if _clean_msg.is_empty():
+		_clean_msg = "(对方正在思考...)"
 	# 显示NPC回复
-	dialogue_text.append_text("[color=yellow]" + npc_name + ":[/color] " + message + "\n")
+	dialogue_text.append_text("[color=yellow]" + npc_name + ":[/color] " + _clean_msg + "\n")
 	
 	# 滚动到底部
 	dialogue_text.scroll_to_line(dialogue_text.get_line_count() - 1)

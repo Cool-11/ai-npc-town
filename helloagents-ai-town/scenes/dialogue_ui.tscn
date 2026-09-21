@@ -44,6 +44,7 @@ scroll_following = true
 scroll_following_visible_characters = true
 
 [node name="PlayerInput" type="LineEdit" parent="Panel"]
+focus_mode = 0
 layout_mode = 0
 offset_left = 20.0
 offset_top = 180.0
