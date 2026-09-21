@@ -11,6 +11,7 @@ from hello_agents.memory import MemoryManager, MemoryConfig, MemoryItem
 from typing import Dict, List, Optional
 from datetime import datetime
 from relationship_manager import RelationshipManager
+import _embedding_patch  # noqa: F401  # monkey-patches hello-agents 0.2.9
 from logger import (
     log_dialogue_start, log_affinity, log_memory_retrieval,
     log_generating_response, log_npc_response, log_analyzing_affinity,
